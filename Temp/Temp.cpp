@@ -4,7 +4,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-void setVertexBuffer(GLuint* bufferPtr, const float* vertices);
+void setVertexBuffer(GLuint* bufferPtr, int arrayMemory, float* vertices);
 void error_callback(int error, const char* description);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
@@ -21,14 +21,27 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 }
 
-void setVertexBuffer(GLuint* bufferPtr, const float* vertices)
+template <typename T>
+void debugPrintArray(T* data, int arrayMemory) {
+	int size = arrayMemory / sizeof(T);
+	std::cout << "Array [" << size << "] { ";
+	for (int i=0; i<size; i++)
+	{
+		std::cout << data[i];
+		if (i != size-1) {
+			std::cout << ", ";
+		}
+	}
+	std::cout << " }\n";
+}
+
+void setVertexBuffer(GLuint* bufferPtr, int arrayMemory, float* vertices)
 {
 	glGenBuffers(1, bufferPtr);
 	glBindBuffer(GL_ARRAY_BUFFER, *bufferPtr);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, arrayMemory, vertices, GL_STATIC_DRAW);
 }
 
-/*
 GLuint setShader(GLenum shaderType, const GLchar* shaderSource, GLint* shaderStatus)
 {
 	GLuint shader = glCreateShader(shaderType);
@@ -38,7 +51,6 @@ GLuint setShader(GLenum shaderType, const GLchar* shaderSource, GLint* shaderSta
 
 	return shader;
 }
-*/
 
 void runGlLoop(const GLchar* vertexSource, const GLchar* fragmentSource) {
 	if (!glfwInit())
@@ -84,20 +96,10 @@ void runGlLoop(const GLchar* vertexSource, const GLchar* fragmentSource) {
 	GLuint vertexShader;
 	GLint vertexShaderStatus;
 
-	setVertexBuffer(&vertexBuffer, vertices);
+	setVertexBuffer(&vertexBuffer, sizeof(vertices), vertices);
 
-	//vertexShader = setShader(GL_VERTEX_SHADER, vertexSource, &vertexShaderStatus);
-	//fragmentShader = setShader(GL_FRAGMENT_SHADER, fragmentSource, &fragmentShaderStatus);
-
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexSource, NULL);
-	glCompileShader(vertexShader);
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &vertexShaderStatus);
-
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
-	glCompileShader(fragmentShader);
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &fragmentShaderStatus);
+	vertexShader = setShader(GL_VERTEX_SHADER, vertexSource, &vertexShaderStatus);
+	fragmentShader = setShader(GL_FRAGMENT_SHADER, fragmentSource, &fragmentShaderStatus);
 
 	shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
